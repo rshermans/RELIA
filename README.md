@@ -16,4 +16,4 @@ To run RELIA locally, follow these steps:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/relia.git
+git clone https://github.com/rshermans/RELIA
