@@ -1,0 +1,14 @@
+# Configurações sensíveis
+*.toml
+*.db
+*.bd
+.env
+.env.local
+secrets.*
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.backup
