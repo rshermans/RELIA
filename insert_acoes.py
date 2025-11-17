@@ -1,0 +1,574 @@
+import sqlite3
+import json
+
+# Conectar ao banco de dados (ou criar um novo se não existir)
+conn = sqlite3.connect('relia.db')
+cursor = conn.cursor()
+
+# Criar a tabela se não existir
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS acoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nomes_acao TEXT NOT NULL,
+    nivel_bloom TEXT NOT NULL,
+    pontos INTEGER NOT NULL,
+    tipo_resposta TEXT NOT NULL,
+    template_pergunta TEXT NOT NULL,
+    respostas_esperadas TEXT
+);
+''')
+
+# Limpar a tabela antes de inserir novos dados
+cursor.execute('DELETE FROM acoes;')
+
+# Dados JSON
+data_json = """
+{
+    "Lembrar": {
+      "nivel": 1,
+      "acoes": {
+        "Listar": {
+          "id": 101,
+          "pontos": 1,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve listar informacoes específicas da obra.",
+          "template_pergunta": "Liste os três principais personagens da obra '{obra}'."
+        },
+        "Reconhecer": {
+          "id": 102,
+          "pontos": 2,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve reconhecer elementos importantes da obra.",
+          "template_pergunta": "Qual é o tema central abordado na obra '{obra}'?"
+        },
+        "Identificar": {
+          "id": 103,
+          "pontos": 3,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve identificar características-chave da obra.",
+          "template_pergunta": "Identifique o autor da obra '{obra}'."
+        },
+        "Definir": {
+          "id": 104,
+          "pontos": 4,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve definir termos ou conceitos relacionados à obra.",
+          "template_pergunta": "Defina o gênero literário ao qual a obra '{obra}' pertence."
+        },
+        "Mencionar": {
+          "id": 105,
+          "pontos": 5,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve mencionar detalhes específicos da obra.",
+          "template_pergunta": "Mencione o cenário principal onde a história de '{obra}' se desenrola."
+        },
+        "Recitar": {
+          "id": 106,
+          "pontos": 6,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve recitar informacoes memorizadas da obra.",
+          "template_pergunta": "Recite uma citação famosa da obra '{obra}'."
+        },
+        "Enumerar": {
+          "id": 107,
+          "pontos": 7,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve enumerar elementos importantes da obra.",
+          "template_pergunta": "Enumere três eventos significativos que ocorrem em '{obra}'."
+        },
+        "Descrever": {
+          "id": 108,
+          "pontos": 8,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve descrever aspectos básicos da obra.",
+          "template_pergunta": "Descreva brevemente o protagonista de '{obra}'."
+        },
+        "Recordar": {
+          "id": 109,
+          "pontos": 9,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve recordar fatos básicos sobre a obra.",
+          "template_pergunta": "Em que ano a obra '{obra}' foi publicada?"
+        },
+        "Selecionar": {
+          "id": 110,
+          "pontos": 10,
+          "tipo_resposta": "texto",
+          "respostas_esperadas": "O usuário deve selecionar informacoes corretas sobre a obra.",
+          "template_pergunta": "Selecione a opção que indica o período literário de '{obra}'."
+        }
+      }
+    },
+    "Compreender": {
+      "nivel": 2,
+      "acoes": {
+        "Resumir": {
+          "id": 201,
+          "pontos": 10,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve resumir aspectos importantes da obra.",
+          "template_pergunta": "Resuma o enredo principal da obra '{obra}'."
+        },
+        "Esquematizar": {
+          "id": 202,
+          "pontos": 9,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve esquematizar as ideias centrais da obra.",
+          "template_pergunta": "Esquematize os principais eventos que ocorrem em '{obra}'."
+        },
+        "Inferir": {
+          "id": 203,
+          "pontos": 8,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve fazer inferências sobre a obra.",
+          "template_pergunta": "O que você infere sobre o significado da frase 'O amor é a força mais poderosa do universo' na obra '{obra}'?"
+        },
+        "Parafrasear": {
+          "id": 204,
+          "pontos": 7,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve parafrasear trechos da obra.",
+          "template_pergunta": "Parafraseie a frase 'A vida é um palco' na obra '{obra}'."
+        },
+        "Associar": {
+          "id": 205,
+          "pontos": 6,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve associar elementos da obra.",
+          "template_pergunta": "Associe o tema da solidão na obra '{obra}' com a realidade social da época em que foi escrita."
+        },
+        "Comparar": {
+          "id": 206,
+          "pontos": 5,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve comparar elementos da obra.",
+          "template_pergunta": "Compare o estilo de escrita do autor em '{obra}' com o estilo de outro autor."
+        },
+        "Explicar": {
+          "id": 207,
+          "pontos": 4,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve explicar conceitos da obra.",
+          "template_pergunta": "Explique como o conceito de 'liberdade' é apresentado na obra '{obra}'."
+        },
+        "Relacionar": {
+          "id": 208,
+          "pontos": 3,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve relacionar elementos da obra.",
+          "template_pergunta": "Relacione o final da obra '{obra}' com o início da história."
+        },
+        "Distinguir": {
+          "id": 209,
+          "pontos": 2,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve distinguir elementos da obra.",
+          "template_pergunta": "Qual a diferença entre o protagonista e o antagonista na obra '{obra}'?"
+        }
+      }
+    },
+    "Aplicar": {
+      "nivel": 3,
+      "acoes": {
+        "Demonstrar": {
+          "id": 301,
+          "pontos": 15,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve demonstrar como conceitos da obra podem ser aplicados.",
+          "template_pergunta": "Demonstre como os temas de '{obra}' podem ser aplicados ao contexto atual."
+        },
+        "Resolver": {
+          "id": 302,
+          "pontos": 17,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve resolver problemas utilizando conhecimentos da obra.",
+          "template_pergunta": "Resolva um conflito atual usando os princípios apresentados em '{obra}'."
+        },
+        "Utilizar": {
+          "id": 303,
+          "pontos": 19,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve utilizar conhecimentos da obra em situacoes práticas.",
+          "template_pergunta": "Imagine que você é um líder. Aplique os princípios de liderança presentes na obra '{obra}' em sua gestão."
+        },
+        "Executar": {
+          "id": 304,
+          "pontos": 21,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve executar uma tarefa com base em conhecimentos da obra.",
+          "template_pergunta": "Imagine que você está escrevendo um roteiro para um filme. Utilize o conceito de 'destino' da obra '{obra}' para criar uma cena impactante."
+        },
+        "Calcular": {
+          "id": 305,
+          "pontos": 23,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve realizar cálculos ou análises quantitativas com base na obra.",
+          "template_pergunta": "Calcule a proporção de personagens femininas e masculinas na obra '{obra}'."
+        },
+        "Classificar": {
+          "id": 306,
+          "pontos": 25,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve classificar elementos da obra de acordo com critérios específicos.",
+          "template_pergunta": "Classifique os personagens de '{obra}' de acordo com a importância da sua participação na narrativa."
+        },
+        "Implementar": {
+          "id": 307,
+          "pontos": 27,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve implementar soluções práticas com base em conhecimentos da obra.",
+          "template_pergunta": "Imagine que você está criando um jogo de RPG. Implemente o conceito de 'força' da obra '{obra}' como um atributo do jogador."
+        },
+        "Criar": {
+          "id": 308,
+          "pontos": 29,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve criar algo novo, aplicando conhecimentos da obra.",
+          "template_pergunta": "Crie um plano de ação para solucionar um problema social, inspirando-se na obra '{obra}'."
+        },
+        "Desenvolver": {
+          "id": 309,
+          "pontos": 31,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve desenvolver um produto, serviço ou solução com base em conceitos da obra.",
+          "template_pergunta": "Desenvolva um sistema de gestão de projetos inspirado nos conceitos de 'planejamento' da obra '{obra}'."
+        },
+        "Experimentar": {
+          "id": 310,
+          "pontos": 33,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve experimentar diferentes abordagens, aplicando conhecimentos da obra.",
+          "template_pergunta": "Experimente diferentes estratégias para lidar com a frustração, inspirando-se nos personagens da obra '{obra}'."
+        },
+        "Modificar": {
+          "id": 311,
+          "pontos": 35,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve modificar um sistema ou processo com base em conceitos da obra.",
+          "template_pergunta": "Modifique o modelo de ensino tradicional, inspirando-se nos métodos de ensino da obra '{obra}'."
+        },
+        "Usar": {
+          "id": 312,
+          "pontos": 37,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve usar conceitos da obra para melhorar a sua própria vida ou a vida de outras pessoas.",
+          "template_pergunta": "Utilize os princípios de 'empatia' da obra '{obra}' para melhorar as suas relacoes interpessoais."
+        }
+      }
+    },
+    "Analisar": {
+      "nivel": 4,
+      "acoes": {
+        "Analisar": {
+          "id": 401,
+          "pontos": 20,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve analisar elementos da obra.",
+          "template_pergunta": "Analise a evolução do personagem principal em '{obra}'."
+        },
+        "Comparar": {
+          "id": 402,
+          "pontos": 19,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve comparar diferentes aspectos da obra.",
+          "template_pergunta": "Compare os temas de '{obra}' com outra obra do mesmo autor."
+        },
+        "Diferenciar": {
+          "id": 403,
+          "pontos": 18,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve identificar as diferenças entre elementos da obra.",
+          "template_pergunta": "Diferencie o estilo de escrita do autor em '{obra}' do estilo de outro autor."
+        },
+        "Integrar": {
+          "id": 404,
+          "pontos": 17,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve integrar elementos da obra para criar um novo todo.",
+          "template_pergunta": "Integre os temas de '{obra}' com outros elementos da cultura brasileira."
+        },
+        "Investigar": {
+          "id": 405,
+          "pontos": 16,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve investigar aspectos específicos da obra.",
+          "template_pergunta": "Investigue como a obra '{obra}' aborda a questão da desigualdade social."
+        },
+        "Identificar": {
+          "id": 406,
+          "pontos": 15,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve identificar características e padrões na obra.",
+          "template_pergunta": "Identifique os principais padrões de comportamento dos personagens em '{obra}'."
+        },
+        "Sintetizar": {
+          "id": 407,
+          "pontos": 14,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve sintetizar informacoes da obra.",
+          "template_pergunta": "Sintetize os principais temas da obra '{obra}' em um único parágrafo."
+        },
+        "Classificar": {
+          "id": 408,
+          "pontos": 13,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve classificar elementos da obra com base em critérios específicos.",
+          "template_pergunta": "Classifique os personagens da obra '{obra}' de acordo com a sua importância na trama."
+        },
+        "Inferir": {
+          "id": 409,
+          "pontos": 12,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve fazer inferências sobre a obra.",
+          "template_pergunta": "Com base na obra '{obra}', o que você infere sobre o futuro da sociedade?"
+        },
+        "Explorar": {
+          "id": 410,
+          "pontos": 11,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve analisar a estrutura da obra, seus elementos e suas relacoes.",
+          "template_pergunta": "Analise a estrutura da narrativa da obra '{obra}'."
+        },
+        "Interpretar": {
+          "id": 411,
+          "pontos": 10,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve interpretar o significado da obra.",
+          "template_pergunta": "Interpreta o significado da metáfora 'A alma é um rio' na obra '{obra}'."
+        }
+      }
+    },
+    "Avaliar": {
+      "nivel": 5,
+      "acoes": {
+        "Avaliar": {
+          "id": 501,
+          "pontos": 25,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve avaliar criticamente a obra.",
+          "template_pergunta": "Avalie o impacto de '{obra}' na literatura brasileira."
+        },
+        "Justificar": {
+          "id": 502,
+          "pontos": 23,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve justificar opiniões sobre a obra.",
+          "template_pergunta": "Justifique sua opinião sobre o desfecho de '{obra}'."
+        },
+        "Comparar": {
+          "id": 503,
+          "pontos": 21,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve comparar a obra com outras obras.",
+          "template_pergunta": "Compare a obra '{obra}' com outra obra de um autor brasileiro."
+        },
+        "Estimar": {
+          "id": 504,
+          "pontos": 20,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve estimar o valor ou a importância da obra.",
+          "template_pergunta": "Estime o valor literário da obra '{obra}'."
+        },
+        "Julgar": {
+          "id": 505,
+          "pontos": 18,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve fazer julgamentos sobre a obra.",
+          "template_pergunta": "Julgue a importância do tema da liberdade na obra '{obra}'."
+        },
+        "Determinar": {
+          "id": 506,
+          "pontos": 17,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve determinar a função de elementos na obra.",
+          "template_pergunta": "Determine a função da personagem 'X' na obra '{obra}'."
+        },
+        "Compreender": {
+          "id": 507,
+          "pontos": 16,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve compreender o significado da obra.",
+          "template_pergunta": "Com base na obra '{obra}', explique o significado do amor."
+        },
+        "Interpretar": {
+          "id": 508,
+          "pontos": 15,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve interpretar o significado da obra.",
+          "template_pergunta": "Interpreta o significado da metáfora 'A alma é um rio' na obra '{obra}'."
+        },
+        "Reconhecer": {
+          "id": 509,
+          "pontos": 14,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve reconhecer os elementos da obra.",
+          "template_pergunta": "Reconheça as características do estilo do autor em '{obra}'."
+        },
+        "Criar": {
+          "id": 510,
+          "pontos": 13,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve criar algo novo baseado na obra.",
+          "template_pergunta": "Crie um conto curto baseado na obra '{obra}'."
+        }
+      }
+    },
+    "Criar": {
+      "nivel": 6,
+      "acoes": {
+        "Criar": {
+          "id": 601,
+          "pontos": 30,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve criar algo novo inspirado na obra.",
+          "template_pergunta": "Crie um poema ou texto inspirado nos temas de '{obra}'."
+        },
+        "Inventar": {
+          "id": 602,
+          "pontos": 28,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve inventar novas ideias baseadas na obra.",
+          "template_pergunta": "Invente um final alternativo para '{obra}'."
+        },
+        "Desenvolver": {
+          "id": 603,
+          "pontos": 27,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve desenvolver uma ideia ou produto a partir da obra.",
+          "template_pergunta": "Desenvolva um jogo de RPG com base na obra '{obra}'."
+        },
+        "Planejar": {
+          "id": 604,
+          "pontos": 26,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve planejar uma ação a partir dos conceitos da obra.",
+          "template_pergunta": "Planeje um projeto social que se inspire nos valores apresentados na obra '{obra}'."
+        },
+        "Descobrir": {
+          "id": 605,
+          "pontos": 25,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve descobrir novas ideias ou conceitos a partir da obra.",
+          "template_pergunta": "Descobrir novas ideias de marketing com base nos temas da obra '{obra}'."
+        },
+        "Elaborar": {
+          "id": 606,
+          "pontos": 24,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve elaborar um novo produto ou serviço a partir dos conceitos da obra.",
+          "template_pergunta": "Elabore um guia de como ser um líder mais eficaz, baseado na obra '{obra}'."
+        },
+        "Produzir": {
+          "id": 607,
+          "pontos": 23,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve produzir algo novo baseado na obra.",
+          "template_pergunta": "Produza um vídeo explicando os conceitos de '{obra}' para um público leigo."
+        },
+        "Propor": {
+          "id": 608,
+          "pontos": 22,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve propor soluções inovadoras com base na obra.",
+          "template_pergunta": "Proponha uma nova forma de educar as crianças com base nos ensinamentos da obra '{obra}'."
+        },
+        "Construir": {
+          "id": 609,
+          "pontos": 21,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve construir algo novo com base na obra.",
+          "template_pergunta": "Construa um modelo de negócio baseado nos princípios da obra '{obra}'."
+        },
+        "Conceber": {
+          "id": 610,
+          "pontos": 20,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve conceber algo novo com base na obra.",
+          "template_pergunta": "Conceba um novo sistema de saúde baseado nos valores da obra '{obra}'."
+        },
+        "Discorrer": {
+          "id": 611,
+          "pontos": 19,
+          "tipo_resposta": "textarea",
+          "respostas_esperadas": "O usuário deve desenvolver um produto, serviço ou solução com base em conceitos da obra.",
+          "template_pergunta": "Desenvolva um sistema de gestão de projetos inspirado nos conceitos de 'planejamento' da obra '{obra}'."
+        }
+      }
+    }
+}
+"""
+
+# Carregar os dados do JSON
+data = json.loads(data_json)
+
+# Inserir os dados na tabela
+for nivel_bloom, nivel_data in data.items():
+    for acao, acao_data in nivel_data['acoes'].items():
+        cursor.execute('''
+            INSERT INTO acoes (id, nomes_acao, nivel_bloom, pontos, tipo_resposta, template_pergunta, respostas_esperadas)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            acao_data['id'],
+            acao,
+            nivel_bloom,
+            acao_data['pontos'],
+            acao_data['tipo_resposta'],
+            acao_data['template_pergunta'],
+            acao_data['respostas_esperadas']
+        ))
+
+# Commit as alterações e fechar a conexão
+conn.commit()
+conn.close()
+
+
+
+
+import sqlite3
+import json
+
+def verificar_respostas_esperadas():
+    conn = sqlite3.connect('relia.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, respostas_esperadas FROM acoes")
+    acoes = cursor.fetchall()
+    conn.close()
+    
+    for acao in acoes:
+        id_acao, respostas_esperadas = acao
+        if respostas_esperadas and respostas_esperadas.strip():
+            try:
+                json.loads(respostas_esperadas)
+            except json.JSONDecodeError:
+                print(f"Ação ID {id_acao} tem respostas_esperadas inválidas: {respostas_esperadas}")
+
+#verificar_respostas_esperadas()
+
+
+def corrigir_respostas_esperadas():
+    conn = sqlite3.connect('relia.db')
+    cursor = conn.cursor()
+    
+    # Seleciona todas as ações com respostas_esperadas inválidas ou vazias
+    cursor.execute("SELECT id, respostas_esperadas FROM acoes")
+    acoes = cursor.fetchall()
+    
+    for acao in acoes:
+        id_acao, respostas_esperadas = acao
+        if respostas_esperadas and respostas_esperadas.strip():
+            try:
+                json.loads(respostas_esperadas)
+            except json.JSONDecodeError:
+                # Atualiza para uma lista vazia
+                cursor.execute("UPDATE acoes SET respostas_esperadas = '[]' WHERE id = ?", (id_acao,))
+                print(f"Ação ID {id_acao} atualizada para respostas_esperadas vazias.")
+        elif respostas_esperadas is None or not respostas_esperadas.strip():
+            # Atualiza para uma lista vazia
+            cursor.execute("UPDATE acoes SET respostas_esperadas = '[]' WHERE id = ?", (id_acao,))
+            print(f"Ação ID {id_acao} atualizada para respostas_esperadas vazias.")
+    
+    conn.commit()
+    conn.close()
+
+#corrigir_respostas_esperadas()
+

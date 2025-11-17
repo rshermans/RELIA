@@ -1,0 +1,24 @@
+name: Dev Container Build and Push Image
+
+on:
+  push:
+    branches:
+      - main  # Ou qualquer branch que você queira monitorar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: false  # Não faça push da imagem
+        tags: your-dockerhub-username/your-image-name:latest
