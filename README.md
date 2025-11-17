@@ -34,20 +34,9 @@ Execute a aplicação:
 bash
 streamlit run app.py
 📁 Estrutura do Projeto
-text
-RELIA/
-├── app.py                      # Aplicação principal Streamlit
-├── requirements.txt            # Dependências do projeto
-├── README.md                   # Documentação
-├── src/                       # Código-fonte
-│   ├── text_processor.py      # Processamento de texto e NLP
-│   ├── ai_integration.py      # Integração com APIs de IA
-│   └── pedagogical_engine.py  # Módulo pedagógico e literário
-├── data/                      # Dados e recursos
-│   └── sample_texts/          # Textos literários de exemplo
-└── tests/                     # Testes unitários
+
 🎯 Como Usar
-Acesso via Web: A aplicação está disponível em [Link para Streamlit Cloud] (em implantação)
+Acesso via Web: A aplicação está disponível em [reliia.streamlit.app] (em implantação)
 
 Input de Texto: Insira ou faça upload de textos literários
 
